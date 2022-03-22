@@ -123,9 +123,16 @@ func sendWebhook(amo *alertManOut) {
 				realname = alert.Labels["exported_instance"]
 			}
 
+			//In our setup, this Description isn't present, causing the post to the webhook endpoint to fail
+			//returning "_ _" is a kludge to workaround it
+			fieldValue := alert.Annotations.Description
+			if fieldValue == "" {
+				fieldValue = "_ _"
+			}
+
 			RichEmbed.Fields = append(RichEmbed.Fields, discordEmbedField{
 				Name:  fmt.Sprintf("[%s]: %s on %s", strings.ToUpper(status), alert.Labels["alertname"], realname),
-				Value: alert.Annotations.Description,
+				Value: fieldValue,
 			})
 		}
 
