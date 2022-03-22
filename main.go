@@ -123,15 +123,26 @@ func sendWebhook(amo *alertManOut) {
 				realname = alert.Labels["exported_instance"]
 			}
 
+			fieldName := fmt.Sprintf("[%s]: %s on %s", strings.ToUpper(status), alert.Labels["alertname"], realname)
+			if len(fieldName) > 256 {
+				log.Printf("Trimming fieldName: %s", fieldName)
+				//this isn't completely correct if unicode characters are involved, and may invalidate the last character
+				fieldName = fieldName[0:256]
+			}
+
 			//In our setup, this Description isn't present, causing the post to the webhook endpoint to fail
 			//returning "_ _" is a kludge to workaround it
 			fieldValue := alert.Annotations.Description
 			if fieldValue == "" {
 				fieldValue = "_ _"
+			} else if len(fieldValue) > 2048 {
+				log.Printf("Trimming fieldValue: %s", fieldValue)
+				//this isn't completely correct if unicode characters are involved, and may invalidate the last character
+				fieldValue = fieldValue[0:2048]
 			}
 
 			RichEmbed.Fields = append(RichEmbed.Fields, discordEmbedField{
-				Name:  fmt.Sprintf("[%s]: %s on %s", strings.ToUpper(status), alert.Labels["alertname"], realname),
+				Name:  fieldName,
 				Value: fieldValue,
 			})
 		}
